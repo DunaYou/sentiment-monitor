@@ -236,9 +236,7 @@ async function register() {
   const confirm = document.getElementById('confirm-password').value;
   const name = document.getElementById('reg-name').value.trim();
   const errEl = document.getElementById('login-error');
-  const succEl = document.getElementById('login-success');
   errEl.style.display = 'none';
-  succEl.style.display = 'none';
 
   if (!name) { errEl.textContent = '請填寫姓名'; errEl.style.display = 'block'; return; }
   if (!email || !password) { errEl.textContent = '請填寫 Email 和密碼'; errEl.style.display = 'block'; return; }
@@ -249,23 +247,20 @@ async function register() {
   btn.disabled = true;
   btn.textContent = '送出中...';
 
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if (error) {
-    errEl.textContent = error.message.includes('already registered') ? '此 Email 已註冊，請直接登入' : '申請失敗：' + error.message;
+  // 帳號建立完全在後端處理，前端不碰 Supabase session
+  const resp = await fetch(`${BACKEND_URL}/api/register`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ email, password, name })
+  });
+
+  if (!resp.ok) {
+    const d = await resp.json().catch(() => ({}));
+    errEl.textContent = d.detail || '申請失敗，請稍後再試';
     errEl.style.display = 'block';
     btn.disabled = false; btn.textContent = '送出申請';
     return;
   }
-
-  // 立即登出，凍結動作交由後端處理
-  await sb.auth.signOut();
-
-  // 通知後端：凍結帳號 + 發審核信
-  await fetch(`${BACKEND_URL}/api/request-approval`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ user_id: data.user.id, email, name })
-  });
 
   document.getElementById('login-page').innerHTML = `
     <div class="login-card" style="text-align:center">
