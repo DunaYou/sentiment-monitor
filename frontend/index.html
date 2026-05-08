@@ -297,6 +297,23 @@ async function logout() {
 async function showMain() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
+
+  // 審核狀態檢查
+  const checkResp = await fetch(`${BACKEND_URL}/api/check-approval?user_id=${user.id}`);
+  const checkData = await checkResp.json();
+  if (!checkData.approved) {
+    await sb.auth.signOut();
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('login-page').innerHTML = `
+      <div class="login-card" style="text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">⏳</div>
+        <h1 style="font-size:20px;margin-bottom:12px">帳號審核中</h1>
+        <p style="color:#666;line-height:1.6">${user.email}<br>尚未通過管理員審核，請稍候。</p>
+        <p style="margin-top:20px"><a href="${window.location.href}" style="color:#173B2F;font-size:13px">重新整理</a></p>
+      </div>`;
+    return;
+  }
+
   currentUser = user;
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('main-page').style.display = 'block';

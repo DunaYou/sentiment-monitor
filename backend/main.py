@@ -146,6 +146,15 @@ async def sentiment_scan(x_scan_secret: str = Header(default="")):
     }
 
 
+@app.get("/api/check-approval")
+async def check_approval(user_id: str):
+    rec = supabase.table("pending_registrations").select("approved_at, name").eq("user_id", user_id).execute()
+    if not rec.data:
+        return {"approved": True}  # 不在 pending 表 = 原有帳號，直接放行
+    row = rec.data[0]
+    return {"approved": row["approved_at"] is not None, "name": row.get("name", "")}
+
+
 @app.get("/api/articles")
 async def get_articles(category: str = None, limit: int = 50, offset: int = 0):
     query = supabase.table("articles").select("*").order("published_at", desc=True).range(offset, offset + limit - 1)
@@ -163,7 +172,7 @@ class RegisterRequest(BaseModel):
 
 @app.post("/api/register")
 async def register_user(body: RegisterRequest):
-    # 用 Admin API 建帳號（banned_until 不能在建立時設，需建完後再 PUT）
+    # 用 Admin API 建帳號
     async with httpx.AsyncClient() as client:
         create_resp = await client.post(
             f"{SUPABASE_URL}/auth/v1/admin/users",
@@ -177,13 +186,6 @@ async def register_user(body: RegisterRequest):
             raise HTTPException(status_code=400, detail="建立帳號失敗")
 
         user_id = create_resp.json()["id"]
-
-        # 立刻凍結帳號
-        await client.put(
-            f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
-            headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "apikey": SUPABASE_SERVICE_KEY},
-            json={"banned_until": "2099-01-01T00:00:00Z"}
-        )
 
     # 建立 pending 記錄，取得 approval_token
     rec = supabase.table("pending_registrations").insert({
