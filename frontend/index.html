@@ -99,18 +99,26 @@
 <div id="login-page">
   <div class="login-card">
     <h1>醫療輿情監控系統</h1>
-    <p>盈爍 × 瑞爍 內部使用</p>
+    <p id="auth-subtitle">盈爍 × 瑞爍 內部使用</p>
     <div class="input-group">
       <label>Email</label>
       <input type="email" id="email" placeholder="your@email.com">
     </div>
     <div class="input-group">
       <label>密碼</label>
-      <input type="password" id="password" placeholder="••••••••">
+      <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAuth()">
     </div>
-    <button class="btn-primary" onclick="login()">登入</button>
+    <div class="input-group" id="confirm-group" style="display:none">
+      <label>確認密碼</label>
+      <input type="password" id="confirm-password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="auth-btn" onclick="handleAuth()">登入</button>
     <div class="error-msg" id="login-error">帳號或密碼錯誤</div>
-    <p style="margin-top:16px; font-size:12px; color:#aaa; text-align:center">沒有帳號？請聯繫管理員開通</p>
+    <div class="success-msg" id="login-success" style="color:#27ae60;font-size:13px;margin-top:8px;display:none"></div>
+    <p style="margin-top:16px; font-size:13px; color:#888; text-align:center">
+      <span id="auth-toggle-text">還沒有帳號？</span>
+      <a href="#" id="auth-toggle-link" onclick="toggleAuthMode(event)" style="color:#173B2F;font-weight:600;text-decoration:none">立即註冊</a>
+    </p>
   </div>
 </div>
 
@@ -181,15 +189,64 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentFilter = 'all';
 let currentUser = null;
 let settings = { notify_medical_beauty: true, notify_other_medical: true, line_user_id: '' };
+let isRegisterMode = false;
+
+function toggleAuthMode(e) {
+  e.preventDefault();
+  isRegisterMode = !isRegisterMode;
+  document.getElementById('confirm-group').style.display = isRegisterMode ? 'block' : 'none';
+  document.getElementById('auth-btn').textContent = isRegisterMode ? '註冊' : '登入';
+  document.getElementById('auth-subtitle').textContent = isRegisterMode ? '建立新帳號' : '盈爍 × 瑞爍 內部使用';
+  document.getElementById('auth-toggle-text').textContent = isRegisterMode ? '已有帳號？' : '還沒有帳號？';
+  document.getElementById('auth-toggle-link').textContent = isRegisterMode ? '返回登入' : '立即註冊';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-success').style.display = 'none';
+}
+
+async function handleAuth() {
+  if (isRegisterMode) {
+    await register();
+  } else {
+    await login();
+  }
+}
 
 async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) {
-    document.getElementById('login-error').style.display = 'block';
+    errEl.textContent = '帳號或密碼錯誤';
+    errEl.style.display = 'block';
   } else {
     showMain();
+  }
+}
+
+async function register() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm-password').value;
+  const errEl = document.getElementById('login-error');
+  const succEl = document.getElementById('login-success');
+  errEl.style.display = 'none';
+  succEl.style.display = 'none';
+
+  if (!email || !password) { errEl.textContent = '請填寫 Email 和密碼'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = '密碼至少需要 6 位'; errEl.style.display = 'block'; return; }
+  if (password !== confirm) { errEl.textContent = '兩次密碼不一致'; errEl.style.display = 'block'; return; }
+
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    errEl.textContent = error.message.includes('already registered') ? '此 Email 已註冊，請直接登入' : '註冊失敗：' + error.message;
+    errEl.style.display = 'block';
+  } else if (data.session) {
+    showMain();
+  } else {
+    succEl.textContent = '✅ 註冊成功！請至信箱確認後登入';
+    succEl.style.display = 'block';
   }
 }
 
