@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>醫療輿情監控系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f6f9; color: #333; }
+
+    /* Login */
+    #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: white; border-radius: 16px; padding: 48px 40px; width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .login-card h1 { font-size: 22px; font-weight: 700; color: #173B2F; margin-bottom: 8px; }
+    .login-card p { font-size: 14px; color: #888; margin-bottom: 32px; }
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .input-group input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
+    .input-group input:focus { outline: none; border-color: #173B2F; }
+    .btn-primary { width: 100%; padding: 12px; background: #173B2F; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .error-msg { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
+
+    /* Main */
+    #main-page { display: none; }
+    .navbar { background: #173B2F; color: white; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .navbar h1 { font-size: 16px; font-weight: 700; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; }
+    .nav-link { color: rgba(255,255,255,0.8); font-size: 14px; cursor: pointer; text-decoration: none; }
+    .nav-link:hover { color: white; }
+    .user-badge { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+    /* Filters */
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #ddd; background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: #173B2F; color: white; border-color: #173B2F; }
+    .filter-btn.beauty.active { background: #c0392b; border-color: #c0392b; }
+    .refresh-btn { margin-left: auto; padding: 7px 16px; background: #173B2F; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-card .num { font-size: 28px; font-weight: 800; color: #173B2F; }
+    .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+
+    /* Articles */
+    .articles-grid { display: grid; gap: 12px; }
+    .article-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid #eee; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .article-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .article-card.beauty { border-left-color: #c0392b; }
+    .article-card.other_medical { border-left-color: #e67e22; }
+    .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-beauty { background: #fde8e8; color: #c0392b; }
+    .badge-medical { background: #fef0e6; color: #e67e22; }
+    .badge-source { background: #e8f0fe; color: #1a73e8; }
+    .article-title { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 6px; line-height: 1.4; }
+    .article-snippet { font-size: 13px; color: #666; line-height: 1.5; }
+    .article-footer { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+    .article-time { font-size: 12px; color: #aaa; }
+    .keyword-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+    .keyword-chip { background: #fff0f0; color: #c0392b; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+    .action-btns { display: flex; gap: 8px; margin-left: auto; }
+    .action-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; background: white; }
+    .action-btn.read { color: #27ae60; border-color: #27ae60; }
+    .action-btn.ignore { color: #aaa; }
+    .loading { text-align: center; padding: 48px; color: #aaa; font-size: 14px; }
+    .empty { text-align: center; padding: 48px; color: #aaa; }
+
+    /* Settings Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 200; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 32px; width: 420px; max-width: 90vw; }
+    .modal h2 { font-size: 18px; font-weight: 700; color: #173B2F; margin-bottom: 24px; }
+    .setting-row { margin-bottom: 16px; }
+    .setting-row label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .setting-row input[type=text] { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .toggle-row span { font-size: 14px; color: #333; }
+    .toggle { width: 40px; height: 22px; background: #ddd; border-radius: 11px; cursor: pointer; position: relative; transition: background 0.2s; }
+    .toggle.on { background: #173B2F; }
+    .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.2s; }
+    .toggle.on::after { left: 21px; }
+    .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
+    .btn-secondary { flex: 1; padding: 11px; border: 1.5px solid #ddd; border-radius: 8px; background: white; font-size: 14px; cursor: pointer; }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .login-card { width: 90%; padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="login-page">
+  <div class="login-card">
+    <h1>醫療輿情監控系統</h1>
+    <p>盈爍 × 瑞爍 內部使用</p>
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com">
+    </div>
+    <div class="input-group">
+      <label>密碼</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="login()">登入</button>
+    <div class="error-msg" id="login-error">帳號或密碼錯誤</div>
+    <p style="margin-top:16px; font-size:12px; color:#aaa; text-align:center">沒有帳號？請聯繫管理員開通</p>
+  </div>
+</div>
+
+<!-- Main Page -->
+<div id="main-page">
+  <nav class="navbar">
+    <h1>醫療輿情監控</h1>
+    <div class="navbar-right">
+      <span class="nav-link" onclick="openSettings()">⚙️ 設定</span>
+      <span class="user-badge" id="user-email-badge">—</span>
+      <span class="nav-link" onclick="logout()">登出</span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">今日抓到</div></div>
+      <div class="stat-card"><div class="num" id="stat-beauty" style="color:#c0392b">—</div><div class="label">🔴 醫美</div></div>
+      <div class="stat-card"><div class="num" id="stat-medical" style="color:#e67e22">—</div><div class="label">🟡 其他醫療</div></div>
+      <div class="stat-card"><div class="num" id="stat-unread">—</div><div class="label">未讀</div></div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
+      <button class="filter-btn beauty" onclick="setFilter('medical_beauty', this)">🔴 醫美</button>
+      <button class="filter-btn" onclick="setFilter('other_medical', this)">🟡 其他醫療</button>
+      <button class="refresh-btn" onclick="loadArticles()">↻ 重新整理</button>
+    </div>
+
+    <div class="articles-grid" id="articles-container">
+      <div class="loading">載入中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h2>⚙️ 個人設定</h2>
+    <div class="setting-row">
+      <label>LINE User ID（用於接收推播通知）</label>
+      <input type="text" id="line-user-id" placeholder="Uxxxxxxxxxx">
+      <p style="font-size:11px;color:#aaa;margin-top:4px">在 LINE Bot 輸入「我的ID」可查詢</p>
+    </div>
+    <div class="toggle-row">
+      <span>🔴 醫美類通知</span>
+      <div class="toggle on" id="toggle-beauty" onclick="toggleSetting('beauty')"></div>
+    </div>
+    <div class="toggle-row">
+      <span>🟡 其他醫療通知</span>
+      <div class="toggle on" id="toggle-medical" onclick="toggleSetting('medical')"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSettings()">取消</button>
+      <button class="btn-primary" style="flex:1" onclick="saveSettings()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://pndjqsimdprnnquslscb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBuZGpxc2ltZHBybm5xdXNsc2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzg0MjUsImV4cCI6MjA5MzgxNDQyNX0.nUmUIExTMW-WTUEhyEbZnjvB_rQtAmmfDL9JgKCKYFw';
+const BACKEND_URL = 'https://sentiment-monitor.onrender.com';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentFilter = 'all';
+let currentUser = null;
+let settings = { notify_medical_beauty: true, notify_other_medical: true, line_user_id: '' };
+
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById('login-error').style.display = 'block';
+  } else {
+    showMain();
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  document.getElementById('main-page').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+async function showMain() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  currentUser = user;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('main-page').style.display = 'block';
+  document.getElementById('user-email-badge').textContent = user.email.split('@')[0];
+  await loadSettings();
+  await loadArticles();
+}
+
+async function loadArticles() {
+  document.getElementById('articles-container').innerHTML = '<div class="loading">載入中...</div>';
+
+  let query = sb.from('articles').select('*').order('published_at', { ascending: false }).limit(100);
+  if (currentFilter !== 'all') query = query.eq('category', currentFilter);
+
+  const { data, error } = await query;
+  if (error || !data) {
+    document.getElementById('articles-container').innerHTML = '<div class="empty">載入失敗，請重試</div>';
+    return;
+  }
+
+  updateStats(data);
+  renderArticles(data);
+}
+
+function updateStats(articles) {
+  const today = new Date().toISOString().split('T')[0];
+  const todayArticles = articles.filter(a => a.created_at?.startsWith(today));
+  document.getElementById('stat-total').textContent = todayArticles.length;
+  document.getElementById('stat-beauty').textContent = articles.filter(a => a.category === 'medical_beauty').length;
+  document.getElementById('stat-medical').textContent = articles.filter(a => a.category === 'other_medical').length;
+  document.getElementById('stat-unread').textContent = articles.length;
+}
+
+function renderArticles(articles) {
+  if (!articles.length) {
+    document.getElementById('articles-container').innerHTML = '<div class="empty">目前沒有輿情資料</div>';
+    return;
+  }
+
+  const sourceMap = { dcard: 'Dcard', ptt: 'PTT', google_news: 'Google', threads: 'Threads' };
+  const html = articles.map(a => {
+    const isBeauty = a.category === 'medical_beauty';
+    const badgeClass = isBeauty ? 'badge-beauty' : 'badge-medical';
+    const label = isBeauty ? '🔴 醫美' : '🟡 其他醫療';
+    const keywords = (a.negative_keywords || []).slice(0, 3).map(k => `<span class="keyword-chip">${k}</span>`).join('');
+    const time = a.published_at ? new Date(a.published_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+
+    return `<div class="article-card ${a.category}" onclick="window.open('${a.url}','_blank')">
+      <div class="article-meta">
+        <span class="badge ${badgeClass}">${label}</span>
+        <span class="badge badge-source">${sourceMap[a.source] || a.source}</span>
+      </div>
+      <div class="article-title">${a.title}</div>
+      <div class="article-snippet">${a.content_snippet || ''}</div>
+      <div class="article-footer">
+        <div class="keyword-chips">${keywords}</div>
+        <span class="article-time">${time}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('articles-container').innerHTML = html;
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadArticles();
+}
+
+async function loadSettings() {
+  if (!currentUser) return;
+  const { data } = await sb.from('user_settings').select('*').eq('user_id', currentUser.id).single();
+  if (data) settings = data;
+}
+
+async function saveSettings() {
+  const lineUserId = document.getElementById('line-user-id').value.trim();
+  const notifyBeauty = document.getElementById('toggle-beauty').classList.contains('on');
+  const notifyMedical = document.getElementById('toggle-medical').classList.contains('on');
+
+  const payload = {
+    user_id: currentUser.id,
+    line_user_id: lineUserId || null,
+    notify_medical_beauty: notifyBeauty,
+    notify_other_medical: notifyMedical,
+    updated_at: new Date().toISOString()
+  };
+
+  await sb.from('user_settings').upsert(payload, { onConflict: 'user_id' });
+  settings = payload;
+  closeSettings();
+  alert('設定已儲存！');
+}
+
+function openSettings() {
+  document.getElementById('line-user-id').value = settings.line_user_id || '';
+  document.getElementById('toggle-beauty').className = 'toggle' + (settings.notify_medical_beauty !== false ? ' on' : '');
+  document.getElementById('toggle-medical').className = 'toggle' + (settings.notify_other_medical !== false ? ' on' : '');
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function toggleSetting(type) {
+  const el = document.getElementById(`toggle-${type}`);
+  el.classList.toggle('on');
+}
+
+// 自動重新整理（每 5 分鐘）
+setInterval(loadArticles, 5 * 60 * 1000);
+
+// 啟動
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) showMain();
+});
+</script>
+</body>
+</html>
