@@ -198,22 +198,36 @@ async def register_user(body: RegisterRequest):
     approve_url = f"{BACKEND_URL}/approve-user?token={token}"
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
+    # 撈所有帳號清單
+    all_users = supabase.table("pending_registrations").select("name, email, approved_at").order("created_at").execute()
+    user_rows = ""
+    for u in (all_users.data or []):
+        status = "✅ 已啟用" if u.get("approved_at") else "⏳ 待審核"
+        bg = "" if u.get("approved_at") else 'style="background:#fffbe6"'
+        user_rows += f'<tr {bg}><td style="padding:6px 8px">{u["name"]}</td><td style="padding:6px 8px;color:#666">{u["email"]}</td><td style="padding:6px 8px">{status}</td></tr>'
+
     # 寄審核信給管理員
     resend.Emails.send({
         "from": "onboarding@resend.dev",
         "to": ADMIN_EMAIL,
         "subject": f"【輿情系統】新用戶申請：{body.name}",
         "html": f"""
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-          <h2 style="color:#173B2F">新用戶申請審核</h2>
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px">
+          <h2 style="color:#1B4F82">新用戶申請審核</h2>
           <table style="border-collapse:collapse;width:100%;margin:16px 0">
             <tr><td style="padding:8px;color:#888;width:80px">姓名</td><td style="padding:8px;font-weight:600">{body.name}</td></tr>
             <tr style="background:#f9f9f9"><td style="padding:8px;color:#888">Email</td><td style="padding:8px">{body.email}</td></tr>
             <tr><td style="padding:8px;color:#888">時間</td><td style="padding:8px">{ts}</td></tr>
           </table>
-          <a href="{approve_url}" style="display:inline-block;background:#173B2F;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">
+          <a href="{approve_url}" style="display:inline-block;background:#1B4F82;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">
             ✅ 批准帳號
           </a>
+          <hr style="border:none;border-top:1px solid #eee;margin:28px 0 16px">
+          <p style="color:#555;font-size:13px;font-weight:600;margin-bottom:8px">目前所有帳號（共 {len(all_users.data or [])} 人）</p>
+          <table style="border-collapse:collapse;width:100%;font-size:13px">
+            <tr style="background:#f4f6f9"><th style="padding:6px 8px;text-align:left;color:#888">姓名</th><th style="padding:6px 8px;text-align:left;color:#888">Email</th><th style="padding:6px 8px;text-align:left;color:#888">狀態</th></tr>
+            {user_rows}
+          </table>
           <p style="color:#aaa;font-size:12px;margin-top:24px">若非你認識的人，忽略此信即可，對方無法登入。</p>
         </div>
         """
