@@ -245,22 +245,25 @@ async def approve_user(token: str):
     ).eq("approval_token", token).execute()
 
     # 通知管理員帳號已啟用（Resend 免費版只能寄給帳號本人）
-    resend.Emails.send({
-        "from": "onboarding@resend.dev",
-        "to": ADMIN_EMAIL,
-        "subject": f"【輿情系統】{row['name']} 的帳號已啟用，請通知對方",
-        "html": f"""
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-          <h2 style="color:#1B4F82">帳號啟用完成 ✅</h2>
-          <p style="color:#555;margin:8px 0 20px">以下用戶帳號已成功啟用，請自行通知對方可以登入了。</p>
-          <table style="border-collapse:collapse;width:100%;margin:16px 0">
-            <tr><td style="padding:8px;color:#888;width:60px">姓名</td><td style="padding:8px;font-weight:600">{row['name']}</td></tr>
-            <tr style="background:#f9f9f9"><td style="padding:8px;color:#888">Email</td><td style="padding:8px">{row['email']}</td></tr>
-          </table>
-          <p style="color:#555;font-size:13px">登入網址：<a href="https://duna-sentiment.surge.sh" style="color:#1B4F82">https://duna-sentiment.surge.sh</a></p>
-        </div>
-        """
-    })
+    try:
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": ADMIN_EMAIL,
+            "subject": f"【輿情系統】{row['name']} 的帳號已啟用，請通知對方",
+            "html": f"""
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+              <h2 style="color:#1B4F82">帳號啟用完成 ✅</h2>
+              <p style="color:#555;margin:8px 0 20px">以下用戶帳號已成功啟用，請自行通知對方可以登入了。</p>
+              <table style="border-collapse:collapse;width:100%;margin:16px 0">
+                <tr><td style="padding:8px;color:#888;width:60px">姓名</td><td style="padding:8px;font-weight:600">{row['name']}</td></tr>
+                <tr style="background:#f9f9f9"><td style="padding:8px;color:#888">Email</td><td style="padding:8px">{row['email']}</td></tr>
+              </table>
+              <p style="color:#555;font-size:13px">登入網址：<a href="https://duna-sentiment.surge.sh" style="color:#1B4F82">https://duna-sentiment.surge.sh</a></p>
+            </div>
+            """
+        })
+    except Exception as e:
+        print(f"批准通知信發送失敗: {e}")
 
     return HTMLResponse(f"""
     <html><head><meta charset="utf-8"><style>
