@@ -108,6 +108,10 @@
       <label>密碼</label>
       <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAuth()">
     </div>
+    <div class="input-group" id="name-group" style="display:none">
+      <label>姓名</label>
+      <input type="text" id="reg-name" placeholder="請填寫真實姓名">
+    </div>
     <div class="input-group" id="confirm-group" style="display:none">
       <label>確認密碼</label>
       <input type="password" id="confirm-password" placeholder="••••••••">
@@ -194,11 +198,12 @@ let isRegisterMode = false;
 function toggleAuthMode(e) {
   e.preventDefault();
   isRegisterMode = !isRegisterMode;
+  document.getElementById('name-group').style.display = isRegisterMode ? 'block' : 'none';
   document.getElementById('confirm-group').style.display = isRegisterMode ? 'block' : 'none';
-  document.getElementById('auth-btn').textContent = isRegisterMode ? '註冊' : '登入';
-  document.getElementById('auth-subtitle').textContent = isRegisterMode ? '建立新帳號' : '盈爍 × 瑞爍 內部使用';
+  document.getElementById('auth-btn').textContent = isRegisterMode ? '送出申請' : '登入';
+  document.getElementById('auth-subtitle').textContent = isRegisterMode ? '申請帳號（需管理員審核）' : '盈爍 × 瑞爍 內部使用';
   document.getElementById('auth-toggle-text').textContent = isRegisterMode ? '已有帳號？' : '還沒有帳號？';
-  document.getElementById('auth-toggle-link').textContent = isRegisterMode ? '返回登入' : '立即註冊';
+  document.getElementById('auth-toggle-link').textContent = isRegisterMode ? '返回登入' : '申請帳號';
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-success').style.display = 'none';
 }
@@ -229,25 +234,46 @@ async function register() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirm = document.getElementById('confirm-password').value;
+  const name = document.getElementById('reg-name').value.trim();
   const errEl = document.getElementById('login-error');
   const succEl = document.getElementById('login-success');
   errEl.style.display = 'none';
   succEl.style.display = 'none';
 
+  if (!name) { errEl.textContent = '請填寫姓名'; errEl.style.display = 'block'; return; }
   if (!email || !password) { errEl.textContent = '請填寫 Email 和密碼'; errEl.style.display = 'block'; return; }
   if (password.length < 6) { errEl.textContent = '密碼至少需要 6 位'; errEl.style.display = 'block'; return; }
   if (password !== confirm) { errEl.textContent = '兩次密碼不一致'; errEl.style.display = 'block'; return; }
 
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error) {
-    errEl.textContent = error.message.includes('already registered') ? '此 Email 已註冊，請直接登入' : '註冊失敗：' + error.message;
+    errEl.textContent = error.message.includes('already registered') ? '此 Email 已註冊，請直接登入' : '申請失敗：' + error.message;
     errEl.style.display = 'block';
-  } else if (data.session) {
-    showMain();
-  } else {
-    succEl.textContent = '✅ 註冊成功！請至信箱確認後登入';
-    succEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '送出申請';
+    return;
   }
+
+  // 立即登出，凍結動作交由後端處理
+  await sb.auth.signOut();
+
+  // 通知後端：凍結帳號 + 發審核信
+  await fetch(`${BACKEND_URL}/api/request-approval`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ user_id: data.user.id, email, name })
+  });
+
+  document.getElementById('login-page').innerHTML = `
+    <div class="login-card" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">📬</div>
+      <h1 style="font-size:20px;margin-bottom:12px">申請已送出</h1>
+      <p style="color:#666;line-height:1.6">管理員收到通知後會審核你的帳號。<br>審核通過後即可使用 <strong>${email}</strong> 登入。</p>
+    </div>
+  `;
 }
 
 async function logout() {
