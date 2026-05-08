@@ -244,22 +244,20 @@ async def approve_user(token: str):
         {"approved_at": datetime.now(timezone.utc).isoformat()}
     ).eq("approval_token", token).execute()
 
-    # 寄通知信給用戶
+    # 通知管理員帳號已啟用（Resend 免費版只能寄給帳號本人）
     resend.Emails.send({
         "from": "onboarding@resend.dev",
-        "to": row["email"],
-        "subject": "【輿情監控系統】您的帳號已啟用，可以登入了",
+        "to": ADMIN_EMAIL,
+        "subject": f"【輿情系統】{row['name']} 的帳號已啟用，請通知對方",
         "html": f"""
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-          <img src="https://duna-sentiment.surge.sh/raysure-logo.png" style="width:160px;display:block;margin:0 auto 24px" alt="瑞爍品牌顧問">
-          <h2 style="color:#1B4F82;text-align:center">帳號已啟用 ✅</h2>
-          <p style="color:#555;text-align:center;margin:8px 0 28px">{row['name']} 您好，管理員已批准您的申請，現在可以登入系統了。</p>
-          <div style="text-align:center">
-            <a href="https://duna-sentiment.surge.sh" style="display:inline-block;background:#1B4F82;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600">
-              前往登入
-            </a>
-          </div>
-          <p style="color:#aaa;font-size:12px;text-align:center;margin-top:28px">醫療輿情監控系統 · 瑞爍品牌顧問</p>
+          <h2 style="color:#1B4F82">帳號啟用完成 ✅</h2>
+          <p style="color:#555;margin:8px 0 20px">以下用戶帳號已成功啟用，請自行通知對方可以登入了。</p>
+          <table style="border-collapse:collapse;width:100%;margin:16px 0">
+            <tr><td style="padding:8px;color:#888;width:60px">姓名</td><td style="padding:8px;font-weight:600">{row['name']}</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px;color:#888">Email</td><td style="padding:8px">{row['email']}</td></tr>
+          </table>
+          <p style="color:#555;font-size:13px">登入網址：<a href="https://duna-sentiment.surge.sh" style="color:#1B4F82">https://duna-sentiment.surge.sh</a></p>
         </div>
         """
     })
