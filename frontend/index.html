@@ -3,97 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>醫療輿情監控系統</title>
+  <title>醫療輿情監控 | 瑞爍品牌顧問</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    :root {
+      --brand: #1B4F82;
+      --brand-mid: #2E7BC4;
+      --brand-light: #5BA5D6;
+      --brand-pale: #D6EAF8;
+      --brand-bg: #EAF3FB;
+      --red: #C0392B;
+      --orange: #D4660A;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f6f9; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--brand-bg); color: #333; }
 
     /* Login */
-    #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .login-card { background: white; border-radius: 16px; padding: 48px 40px; width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    .login-card h1 { font-size: 22px; font-weight: 700; color: #173B2F; margin-bottom: 8px; }
-    .login-card p { font-size: 14px; color: #888; margin-bottom: 32px; }
-    .input-group { margin-bottom: 16px; }
-    .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-    .input-group input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
-    .input-group input:focus { outline: none; border-color: #173B2F; }
+    #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(145deg, #D6EAF8 0%, #EAF3FB 50%, #D0E8F5 100%); }
+    .login-card { background: white; border-radius: 20px; padding: 40px 36px 36px; width: 380px; box-shadow: 0 8px 32px rgba(27,79,130,0.12); border-top: 4px solid var(--brand-mid); }
+    .login-logo { display: block; width: 180px; margin: 0 auto 20px; }
+    .login-divider { border: none; border-top: 1px solid #eef3f8; margin: 0 0 20px; }
+    .login-card h1 { font-size: 17px; font-weight: 700; color: var(--brand); margin-bottom: 4px; text-align: center; }
+    .login-card > p, #auth-subtitle { font-size: 13px; color: #8BA8C0; margin-bottom: 24px; text-align: center; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 12px; font-weight: 600; color: #4A6FA5; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+    .input-group input { width: 100%; padding: 10px 14px; border: 1.5px solid #C8DEF0; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; background: #F7FBFF; }
+    .input-group input:focus { outline: none; border-color: var(--brand-mid); background: white; }
     .pw-wrap { position: relative; }
     .pw-wrap input { padding-right: 42px; }
     .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; font-size: 16px; user-select: none; line-height: 1; }
-    .pw-eye:hover { color: #555; }
-    .btn-primary { width: 100%; padding: 12px; background: #173B2F; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-    .btn-primary:hover { opacity: 0.85; }
+    .pw-eye:hover { color: var(--brand-mid); }
+    .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; letter-spacing: .3px; }
+    .btn-primary:hover { opacity: 0.88; }
     .error-msg { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
 
     /* Main */
     #main-page { display: none; }
-    .navbar { background: #173B2F; color: white; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-    .navbar h1 { font-size: 16px; font-weight: 700; }
+    .navbar { background: linear-gradient(135deg, var(--brand) 0%, #1A5FA0 100%); color: white; padding: 0 24px; height: 58px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(27,79,130,0.3); }
+    .navbar-logo { height: 28px; filter: brightness(0) invert(1); }
+    .navbar-title { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 10px; letter-spacing: .3px; }
+    .navbar-left { display: flex; align-items: center; }
     .navbar-right { display: flex; align-items: center; gap: 16px; }
     .nav-link { color: rgba(255,255,255,0.8); font-size: 14px; cursor: pointer; text-decoration: none; }
     .nav-link:hover { color: white; }
-    .user-badge { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+    .user-badge { background: rgba(255,255,255,0.18); padding: 4px 12px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(255,255,255,0.25); }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 
     /* Filters */
     .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-    .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #ddd; background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-    .filter-btn.active { background: #173B2F; color: white; border-color: #173B2F; }
-    .filter-btn.beauty.active { background: #c0392b; border-color: #c0392b; }
-    .refresh-btn { margin-left: auto; padding: 7px 16px; background: #173B2F; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; }
+    .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #C8DEF0; background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; color: #4A6FA5; }
+    .filter-btn:hover { border-color: var(--brand-mid); color: var(--brand-mid); }
+    .filter-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+    .filter-btn.beauty.active { background: var(--red); border-color: var(--red); }
+    .refresh-btn { margin-left: auto; padding: 7px 16px; background: var(--brand-mid); color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
+    .refresh-btn:hover { opacity: .85; }
 
     /* Stats */
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .stat-card .num { font-size: 28px; font-weight: 800; color: #173B2F; }
-    .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+    .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 6px rgba(27,79,130,0.08); border-bottom: 3px solid var(--brand-pale); }
+    .stat-card .num { font-size: 28px; font-weight: 800; color: var(--brand); }
+    .stat-card .label { font-size: 12px; color: #8BA8C0; margin-top: 4px; }
 
     /* Articles */
     .articles-grid { display: grid; gap: 12px; }
-    .article-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid #eee; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
-    .article-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .article-card.beauty { border-left-color: #c0392b; }
-    .article-card.other_medical { border-left-color: #e67e22; }
+    .article-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 6px rgba(27,79,130,0.07); border-left: 4px solid #D6EAF8; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .article-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27,79,130,0.13); }
+    .article-card.beauty { border-left-color: var(--red); }
+    .article-card.other_medical { border-left-color: var(--orange); }
     .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
     .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .badge-beauty { background: #fde8e8; color: #c0392b; }
-    .badge-medical { background: #fef0e6; color: #e67e22; }
-    .badge-source { background: #e8f0fe; color: #1a73e8; }
-    .article-title { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 6px; line-height: 1.4; }
+    .badge-beauty { background: #fde8e8; color: var(--red); }
+    .badge-medical { background: #fef0e6; color: var(--orange); }
+    .badge-source { background: var(--brand-pale); color: var(--brand); }
+    .article-title { font-size: 15px; font-weight: 600; color: #1A3A5C; margin-bottom: 6px; line-height: 1.4; }
     .article-snippet { font-size: 13px; color: #666; line-height: 1.5; }
     .article-footer { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-    .article-time { font-size: 12px; color: #aaa; }
+    .article-time { font-size: 12px; color: #A0BACC; }
     .keyword-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-    .keyword-chip { background: #fff0f0; color: #c0392b; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+    .keyword-chip { background: #fff0f0; color: var(--red); font-size: 11px; padding: 2px 6px; border-radius: 4px; }
     .action-btns { display: flex; gap: 8px; margin-left: auto; }
     .action-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; background: white; }
     .action-btn.read { color: #27ae60; border-color: #27ae60; }
     .action-btn.ignore { color: #aaa; }
-    .loading { text-align: center; padding: 48px; color: #aaa; font-size: 14px; }
-    .empty { text-align: center; padding: 48px; color: #aaa; }
+    .loading { text-align: center; padding: 48px; color: #A0BACC; font-size: 14px; }
+    .empty { text-align: center; padding: 48px; color: #A0BACC; }
 
     /* Settings Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 200; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(10,30,60,0.4); display: none; align-items: center; justify-content: center; z-index: 200; }
     .modal-overlay.open { display: flex; }
     .modal { background: white; border-radius: 16px; padding: 32px; width: 420px; max-width: 90vw; }
-    .modal h2 { font-size: 18px; font-weight: 700; color: #173B2F; margin-bottom: 24px; }
+    .modal h2 { font-size: 18px; font-weight: 700; color: var(--brand); margin-bottom: 24px; }
     .setting-row { margin-bottom: 16px; }
     .setting-row label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-    .setting-row input[type=text] { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; }
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .setting-row input[type=text] { width: 100%; padding: 10px 14px; border: 1.5px solid #C8DEF0; border-radius: 8px; font-size: 14px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #EBF3FA; }
     .toggle-row span { font-size: 14px; color: #333; }
     .toggle { width: 40px; height: 22px; background: #ddd; border-radius: 11px; cursor: pointer; position: relative; transition: background 0.2s; }
-    .toggle.on { background: #173B2F; }
+    .toggle.on { background: var(--brand-mid); }
     .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.2s; }
     .toggle.on::after { left: 21px; }
     .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
-    .btn-secondary { flex: 1; padding: 11px; border: 1.5px solid #ddd; border-radius: 8px; background: white; font-size: 14px; cursor: pointer; }
+    .btn-secondary { flex: 1; padding: 11px; border: 1.5px solid #C8DEF0; border-radius: 8px; background: white; font-size: 14px; cursor: pointer; color: #4A6FA5; }
 
     @media (max-width: 600px) {
       .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .login-card { width: 90%; padding: 32px 24px; }
+      .login-card { width: 92%; padding: 32px 24px; }
+      .login-logo { width: 150px; }
     }
   </style>
 </head>
@@ -102,6 +118,8 @@
 <!-- Login Page -->
 <div id="login-page">
   <div class="login-card">
+    <img class="login-logo" src="raysure-logo.png" alt="瑞爍品牌顧問">
+    <hr class="login-divider">
     <h1>醫療輿情監控系統</h1>
     <p id="auth-subtitle">盈爍 × 瑞爍 內部使用</p>
     <div class="input-group">
@@ -131,7 +149,7 @@
     <div class="success-msg" id="login-success" style="color:#27ae60;font-size:13px;margin-top:8px;display:none"></div>
     <p style="margin-top:16px; font-size:13px; color:#888; text-align:center">
       <span id="auth-toggle-text">還沒有帳號？</span>
-      <a href="#" id="auth-toggle-link" onclick="toggleAuthMode(event)" style="color:#173B2F;font-weight:600;text-decoration:none">立即註冊</a>
+      <a href="#" id="auth-toggle-link" onclick="toggleAuthMode(event)" style="color:var(--brand-mid);font-weight:600;text-decoration:none">立即註冊</a>
     </p>
   </div>
 </div>
@@ -139,7 +157,10 @@
 <!-- Main Page -->
 <div id="main-page">
   <nav class="navbar">
-    <h1>醫療輿情監控</h1>
+    <div class="navbar-left">
+      <img class="navbar-logo" src="raysure-logo.png" alt="瑞爍品牌顧問">
+      <span class="navbar-title">醫療輿情監控</span>
+    </div>
     <div class="navbar-right">
       <span class="nav-link" onclick="openSettings()">⚙️ 設定</span>
       <span class="user-badge" id="user-email-badge">—</span>
