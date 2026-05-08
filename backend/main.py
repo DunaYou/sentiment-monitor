@@ -244,6 +244,26 @@ async def approve_user(token: str):
         {"approved_at": datetime.now(timezone.utc).isoformat()}
     ).eq("approval_token", token).execute()
 
+    # 寄通知信給用戶
+    resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": row["email"],
+        "subject": "【輿情監控系統】您的帳號已啟用，可以登入了",
+        "html": f"""
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+          <img src="https://duna-sentiment.surge.sh/raysure-logo.png" style="width:160px;display:block;margin:0 auto 24px" alt="瑞爍品牌顧問">
+          <h2 style="color:#1B4F82;text-align:center">帳號已啟用 ✅</h2>
+          <p style="color:#555;text-align:center;margin:8px 0 28px">{row['name']} 您好，管理員已批准您的申請，現在可以登入系統了。</p>
+          <div style="text-align:center">
+            <a href="https://duna-sentiment.surge.sh" style="display:inline-block;background:#1B4F82;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600">
+              前往登入
+            </a>
+          </div>
+          <p style="color:#aaa;font-size:12px;text-align:center;margin-top:28px">醫療輿情監控系統 · 瑞爍品牌顧問</p>
+        </div>
+        """
+    })
+
     return HTMLResponse(f"""
     <html><head><meta charset="utf-8"><style>
       body{{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f4f6f9}}
