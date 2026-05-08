@@ -163,25 +163,27 @@ class RegisterRequest(BaseModel):
 
 @app.post("/api/register")
 async def register_user(body: RegisterRequest):
-    # 用 Admin API 直接建帳號，同時設 banned_until，前端永遠拿不到 session
+    # 用 Admin API 建帳號（banned_until 不能在建立時設，需建完後再 PUT）
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
+        create_resp = await client.post(
             f"{SUPABASE_URL}/auth/v1/admin/users",
             headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "apikey": SUPABASE_SERVICE_KEY},
-            json={
-                "email": body.email,
-                "password": body.password,
-                "email_confirm": True,
-                "banned_until": "2099-01-01T00:00:00Z"
-            }
+            json={"email": body.email, "password": body.password, "email_confirm": True}
         )
 
-    if resp.status_code == 422:
-        raise HTTPException(status_code=409, detail="此 Email 已被使用")
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail="建立帳號失敗")
+        if create_resp.status_code == 422:
+            raise HTTPException(status_code=409, detail="此 Email 已被使用")
+        if create_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="建立帳號失敗")
 
-    user_id = resp.json()["id"]
+        user_id = create_resp.json()["id"]
+
+        # 立刻凍結帳號
+        await client.put(
+            f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+            headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "apikey": SUPABASE_SERVICE_KEY},
+            json={"banned_until": "2099-01-01T00:00:00Z"}
+        )
 
     # 建立 pending 記錄，取得 approval_token
     rec = supabase.table("pending_registrations").insert({

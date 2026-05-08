@@ -18,6 +18,10 @@
     .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
     .input-group input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
     .input-group input:focus { outline: none; border-color: #173B2F; }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 42px; }
+    .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; font-size: 16px; user-select: none; line-height: 1; }
+    .pw-eye:hover { color: #555; }
     .btn-primary { width: 100%; padding: 12px; background: #173B2F; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
     .btn-primary:hover { opacity: 0.85; }
     .error-msg { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
@@ -106,7 +110,10 @@
     </div>
     <div class="input-group">
       <label>密碼</label>
-      <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAuth()">
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAuth()">
+        <span class="pw-eye" onclick="togglePw('password',this)">👁</span>
+      </div>
     </div>
     <div class="input-group" id="name-group" style="display:none">
       <label>姓名</label>
@@ -114,7 +121,10 @@
     </div>
     <div class="input-group" id="confirm-group" style="display:none">
       <label>確認密碼</label>
-      <input type="password" id="confirm-password" placeholder="••••••••">
+      <div class="pw-wrap">
+        <input type="password" id="confirm-password" placeholder="••••••••">
+        <span class="pw-eye" onclick="togglePw('confirm-password',this)">👁</span>
+      </div>
     </div>
     <button class="btn-primary" id="auth-btn" onclick="handleAuth()">登入</button>
     <div class="error-msg" id="login-error">帳號或密碼錯誤</div>
@@ -194,6 +204,13 @@ let currentFilter = 'all';
 let currentUser = null;
 let settings = { notify_medical_beauty: true, notify_other_medical: true, line_user_id: '' };
 let isRegisterMode = false;
+
+function togglePw(id, el) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  el.style.opacity = show ? '1' : '0.4';
+}
 
 function toggleAuthMode(e) {
   e.preventDefault();
