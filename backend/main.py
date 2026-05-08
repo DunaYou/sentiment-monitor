@@ -244,19 +244,25 @@ async def approve_user(token: str):
         {"approved_at": datetime.now(timezone.utc).isoformat()}
     ).eq("approval_token", token).execute()
 
-    # 通知管理員帳號已啟用
+    # 通知管理員帳號已啟用（用 httpx 直打 Resend API，繞過 SDK）
     email_note = ""
     try:
-        resend.Emails.send({
-            "from": "onboarding@resend.dev",
-            "to": [ADMIN_EMAIL],
-            "subject": f"[輿情系統] {row['name']} 的帳號已啟用，請通知對方",
-            "html": f"<p>{row['name']}（{row['email']}）的帳號已啟用，請通知對方至 https://duna-sentiment.surge.sh 登入。</p>"
-        })
-        email_note = "✉️ 通知信已發送"
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "from": "onboarding@resend.dev",
+                    "to": [ADMIN_EMAIL],
+                    "subject": f"[輿情系統] {row['name']} 的帳號已啟用，請通知對方",
+                    "html": f"<p><b>{row['name']}</b>（{row['email']}）的帳號已啟用，請通知對方至 https://duna-sentiment.surge.sh 登入。</p>"
+                }
+            )
+        print(f"Resend approve 回應: {r.status_code} {r.text}")
+        email_note = "✉️ 通知信已發送" if r.status_code == 200 else f"⚠️ 寄信失敗（{r.status_code}）：{r.text}"
     except Exception as e:
-        email_note = f"⚠️ 通知信發送失敗：{e}"
-        print(f"批准通知信發送失敗: {e}")
+        email_note = f"⚠️ 例外：{e}"
+        print(f"批准通知信例外: {e}")
 
     return HTMLResponse(f"""
     <html><head><meta charset="utf-8"><style>
