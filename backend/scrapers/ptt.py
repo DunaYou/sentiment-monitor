@@ -59,7 +59,7 @@ async def scrape_ptt() -> list[dict]:
                     seen_urls.add(url)
 
                     category, neg_kws = classify_article(title, "")
-                    if not neg_kws:
+                    if category == "other":
                         continue
 
                     articles.append({
