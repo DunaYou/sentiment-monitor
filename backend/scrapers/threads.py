@@ -1,5 +1,4 @@
 import asyncio
-import os
 from datetime import datetime, timezone
 from .dcard import classify_article
 
@@ -15,7 +14,7 @@ SEARCH_QUERIES = [
 
 def _ddg_search(query: str) -> list[dict]:
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
         with DDGS() as ddgs:
             return list(ddgs.text(f"site:threads.net {query}", max_results=10))
     except Exception as e:
