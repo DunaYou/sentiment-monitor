@@ -3,7 +3,7 @@ import os
 import httpx
 import resend
 from datetime import datetime, timezone
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -117,11 +117,7 @@ def ping():
     return {"status": "ok"}
 
 
-@app.get("/sentiment-scan")
-async def sentiment_scan(x_scan_secret: str = Header(default="")):
-    if SCAN_SECRET and x_scan_secret != SCAN_SECRET:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
+async def _run_scan():
     results = await asyncio.gather(
         scrape_dcard(),
         scrape_google_news(),
@@ -129,21 +125,22 @@ async def sentiment_scan(x_scan_secret: str = Header(default="")):
         scrape_threads(),
         return_exceptions=True
     )
-
     all_articles = []
     for r in results:
         if isinstance(r, list):
             all_articles.extend(r)
         else:
             print(f"爬蟲錯誤: {r}")
+    await save_and_notify(all_articles)
+    print(f"掃描完成，共 {len(all_articles)} 筆")
 
-    new_count = await save_and_notify(all_articles)
 
-    return {
-        "status": "ok",
-        "scanned": len(all_articles),
-        "new": new_count
-    }
+@app.get("/sentiment-scan")
+async def sentiment_scan(background_tasks: BackgroundTasks, x_scan_secret: str = Header(default="")):
+    if SCAN_SECRET and x_scan_secret != SCAN_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    background_tasks.add_task(_run_scan)
+    return {"status": "accepted"}
 
 
 @app.get("/api/check-approval")
