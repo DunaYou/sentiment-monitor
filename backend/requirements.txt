@@ -5,3 +5,4 @@ supabase==2.9.1
 python-multipart==0.0.9
 resend==2.10.0
 ddgs==9.14.2
+anthropic==0.49.0

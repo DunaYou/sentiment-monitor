@@ -7,18 +7,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --brand: #1B4F82;
-      --brand-mid: #2E7BC4;
-      --brand-light: #5BA5D6;
-      --brand-pale: #D6EAF8;
-      --brand-bg: #EAF3FB;
-      --red: #C0392B;
-      --orange: #D4660A;
+      --brand: #1B4F82; --brand-mid: #2E7BC4; --brand-light: #5BA5D6;
+      --brand-pale: #D6EAF8; --brand-bg: #EAF3FB;
+      --red: #C0392B; --orange: #D4660A; --green: #1a7a3c;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--brand-bg); color: #333; }
 
-    /* Login */
+    /* ── Login ── */
     #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(145deg, #D6EAF8 0%, #EAF3FB 50%, #D0E8F5 100%); }
     .login-card { background: white; border-radius: 20px; padding: 40px 36px 36px; width: 380px; box-shadow: 0 8px 32px rgba(27,79,130,0.12); border-top: 4px solid var(--brand-mid); }
     .login-logo { display: block; width: 180px; margin: 0 auto 20px; }
@@ -31,65 +27,102 @@
     .input-group input:focus { outline: none; border-color: var(--brand-mid); background: white; }
     .pw-wrap { position: relative; }
     .pw-wrap input { padding-right: 42px; }
-    .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; font-size: 16px; user-select: none; line-height: 1; }
+    .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; font-size: 16px; user-select: none; }
     .pw-eye:hover { color: var(--brand-mid); }
-    .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; letter-spacing: .3px; }
+    .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
     .btn-primary:hover { opacity: 0.88; }
     .error-msg { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
 
-    /* Main */
+    /* ── Main ── */
     #main-page { display: none; }
     .navbar { background: linear-gradient(135deg, var(--brand) 0%, #1A5FA0 100%); color: white; padding: 0 24px; height: 58px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(27,79,130,0.3); }
     .navbar-logo { height: 28px; filter: brightness(0) invert(1); }
-    .navbar-title { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 10px; letter-spacing: .3px; }
+    .navbar-title { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 10px; }
     .navbar-left { display: flex; align-items: center; }
     .navbar-right { display: flex; align-items: center; gap: 16px; }
     .nav-link { color: rgba(255,255,255,0.8); font-size: 14px; cursor: pointer; text-decoration: none; }
     .nav-link:hover { color: white; }
     .user-badge { background: rgba(255,255,255,0.18); padding: 4px 12px; border-radius: 20px; font-size: 13px; border: 1px solid rgba(255,255,255,0.25); }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    /* ── Tabs ── */
+    .tab-bar { background: white; border-bottom: 1px solid #D6EAF8; display: flex; padding: 0 24px; }
+    .tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 600; color: #8BA8C0; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; }
+    .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-btn:hover:not(.active) { color: var(--brand-mid); }
 
-    /* Filters */
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-    .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #C8DEF0; background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; color: #4A6FA5; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Stats ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 6px rgba(27,79,130,0.08); border-bottom: 3px solid var(--brand-pale); }
+    .stat-card .num { font-size: 26px; font-weight: 800; color: var(--brand); }
+    .stat-card .label { font-size: 12px; color: #8BA8C0; margin-top: 4px; }
+    .stat-card.alert .num { color: var(--red); }
+    .stat-card.alert { border-bottom-color: #fde8e8; }
+
+    /* ── Alert Zone ── */
+    .alert-zone { background: #fff5f5; border: 1.5px solid #f5c6c6; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+    .alert-zone-header { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 12px; }
+    .alert-zone-empty { font-size: 13px; color: #c0a0a0; }
+    .alert-item { background: white; border-left: 4px solid var(--red); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; }
+    .alert-item:hover { background: #fef9f9; }
+    .alert-item-title { font-size: 14px; font-weight: 600; color: #1A3A5C; }
+    .alert-item-meta { font-size: 12px; color: #A0BACC; margin-top: 4px; }
+
+    /* ── Filter ── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #C8DEF0; background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; color: #4A6FA5; }
     .filter-btn:hover { border-color: var(--brand-mid); color: var(--brand-mid); }
     .filter-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
-    .filter-btn.beauty.active { background: var(--red); border-color: var(--red); }
-    .refresh-btn { margin-left: auto; padding: 7px 16px; background: var(--brand-mid); color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
+    .filter-btn.danger.active { background: var(--red); border-color: var(--red); }
+    .refresh-btn { margin-left: auto; padding: 6px 14px; background: var(--brand-mid); color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; }
     .refresh-btn:hover { opacity: .85; }
 
-    /* Stats */
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 6px rgba(27,79,130,0.08); border-bottom: 3px solid var(--brand-pale); }
-    .stat-card .num { font-size: 28px; font-weight: 800; color: var(--brand); }
-    .stat-card .label { font-size: 12px; color: #8BA8C0; margin-top: 4px; }
-
-    /* Articles */
-    .articles-grid { display: grid; gap: 12px; }
-    .article-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 6px rgba(27,79,130,0.07); border-left: 4px solid #D6EAF8; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    /* ── Article Cards ── */
+    .articles-grid { display: grid; gap: 10px; }
+    .article-card { background: white; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 6px rgba(27,79,130,0.07); border-left: 4px solid #D6EAF8; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
     .article-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27,79,130,0.13); }
-    .article-card.beauty { border-left-color: var(--red); }
+    .article-card.medical_beauty { border-left-color: var(--red); }
     .article-card.other_medical { border-left-color: var(--orange); }
-    .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .article-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
     .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .badge-beauty { background: #fde8e8; color: var(--red); }
     .badge-medical { background: #fef0e6; color: var(--orange); }
     .badge-source { background: var(--brand-pale); color: var(--brand); }
-    .article-title { font-size: 15px; font-weight: 600; color: #1A3A5C; margin-bottom: 6px; line-height: 1.4; }
+    .badge-ai-dispute { background: #fde8e8; color: var(--red); border: 1px solid #f5c6c6; }
+    .badge-ai-complaint { background: #fef0e6; color: var(--orange); border: 1px solid #f5dfc6; }
+    .badge-ai-discuss { background: #f0f0f0; color: #666; }
+    .badge-ai-positive { background: #e8f8e8; color: var(--green); }
+    .badge-ai-news { background: #e8f0fe; color: var(--brand); }
+    .article-title { font-size: 14px; font-weight: 600; color: #1A3A5C; margin-bottom: 6px; line-height: 1.4; }
     .article-snippet { font-size: 13px; color: #666; line-height: 1.5; }
-    .article-footer { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-    .article-time { font-size: 12px; color: #A0BACC; }
+    .article-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .article-time { font-size: 12px; color: #A0BACC; margin-left: auto; }
     .keyword-chips { display: flex; gap: 4px; flex-wrap: wrap; }
     .keyword-chip { background: #fff0f0; color: var(--red); font-size: 11px; padding: 2px 6px; border-radius: 4px; }
-    .action-btns { display: flex; gap: 8px; margin-left: auto; }
-    .action-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; background: white; }
-    .action-btn.read { color: #27ae60; border-color: #27ae60; }
-    .action-btn.ignore { color: #aaa; }
     .loading { text-align: center; padding: 48px; color: #A0BACC; font-size: 14px; }
     .empty { text-align: center; padding: 48px; color: #A0BACC; }
 
-    /* Settings Modal */
+    /* ── Search Tab ── */
+    .search-box-wrap { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 8px rgba(27,79,130,0.09); margin-bottom: 20px; }
+    .search-box-wrap h2 { font-size: 16px; color: var(--brand); margin-bottom: 14px; font-weight: 700; }
+    .search-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .search-input { flex: 1; padding: 11px 16px; border: 1.5px solid #C8DEF0; border-radius: 10px; font-size: 15px; background: #F7FBFF; }
+    .search-input:focus { outline: none; border-color: var(--brand-mid); background: white; }
+    .search-btn { padding: 11px 24px; background: var(--brand); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .search-btn:hover { opacity: .88; }
+    .search-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .source-checks { display: flex; gap: 12px; flex-wrap: wrap; }
+    .source-checks label { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #4A6FA5; cursor: pointer; }
+    .search-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .search-stat { background: var(--brand-pale); border-radius: 8px; padding: 10px 14px; text-align: center; }
+    .search-stat .s-num { font-size: 20px; font-weight: 800; color: var(--brand); }
+    .search-stat .s-lbl { font-size: 11px; color: #4A6FA5; margin-top: 2px; }
+    .search-hint { font-size: 13px; color: #A0BACC; text-align: center; padding: 40px; }
+
+    /* ── Settings Modal ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(10,30,60,0.4); display: none; align-items: center; justify-content: center; z-index: 200; }
     .modal-overlay.open { display: flex; }
     .modal { background: white; border-radius: 16px; padding: 32px; width: 420px; max-width: 90vw; }
@@ -109,7 +142,8 @@
     @media (max-width: 600px) {
       .stats-row { grid-template-columns: repeat(2, 1fr); }
       .login-card { width: 92%; padding: 32px 24px; }
-      .login-logo { width: 150px; }
+      .tab-btn { padding: 12px 12px; font-size: 13px; }
+      .search-row { flex-direction: column; }
     }
   </style>
 </head>
@@ -146,8 +180,8 @@
     </div>
     <button class="btn-primary" id="auth-btn" onclick="handleAuth()">登入</button>
     <div class="error-msg" id="login-error">帳號或密碼錯誤</div>
-    <div class="success-msg" id="login-success" style="color:#27ae60;font-size:13px;margin-top:8px;display:none"></div>
-    <p style="margin-top:16px; font-size:13px; color:#888; text-align:center">
+    <div id="login-success" style="color:#27ae60;font-size:13px;margin-top:8px;display:none"></div>
+    <p style="margin-top:16px;font-size:13px;color:#888;text-align:center">
       <span id="auth-toggle-text">還沒有帳號？</span>
       <a href="#" id="auth-toggle-link" onclick="toggleAuthMode(event)" style="color:var(--brand-mid);font-weight:600;text-decoration:none">立即註冊</a>
     </p>
@@ -168,24 +202,65 @@
     </div>
   </nav>
 
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('monitor', this)">📡 輿情監控</button>
+    <button class="tab-btn" onclick="switchTab('search', this)">🔍 關鍵字雷達</button>
+  </div>
+
   <div class="container">
-    <div class="stats-row">
-      <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">今日抓到</div></div>
-      <div class="stat-card"><div class="num" id="stat-beauty" style="color:#c0392b">—</div><div class="label">🔴 醫美</div></div>
-      <div class="stat-card"><div class="num" id="stat-medical" style="color:#e67e22">—</div><div class="label">🟡 其他醫療</div></div>
-      <div class="stat-card"><div class="num" id="stat-unread">—</div><div class="label">未讀</div></div>
+
+    <!-- Tab 1: 輿情監控 -->
+    <div class="tab-panel active" id="tab-monitor">
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">今日抓到</div></div>
+        <div class="stat-card alert"><div class="num" id="stat-dispute">—</div><div class="label">🔴 醫療糾紛</div></div>
+        <div class="stat-card"><div class="num" id="stat-beauty" style="color:#c0392b">—</div><div class="label">醫美類</div></div>
+        <div class="stat-card"><div class="num" id="stat-medical" style="color:#e67e22">—</div><div class="label">其他醫療</div></div>
+      </div>
+
+      <!-- 醫糾警訊區 -->
+      <div class="alert-zone" id="alert-zone" style="display:none">
+        <div class="alert-zone-header">🚨 醫糾警訊 — 今日新增</div>
+        <div id="alert-items"></div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all','cat',this)">全部</button>
+        <button class="filter-btn danger" onclick="setFilter('醫療糾紛','ai',this)">🔴 醫療糾紛</button>
+        <button class="filter-btn" onclick="setFilter('負評投訴','ai',this)">🟠 負評投訴</button>
+        <button class="filter-btn" onclick="setFilter('medical_beauty','cat',this)">醫美類</button>
+        <button class="filter-btn" onclick="setFilter('other_medical','cat',this)">其他醫療</button>
+        <button class="refresh-btn" onclick="loadArticles()">↻ 重新整理</button>
+      </div>
+
+      <div class="articles-grid" id="articles-container">
+        <div class="loading">載入中...</div>
+      </div>
     </div>
 
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
-      <button class="filter-btn beauty" onclick="setFilter('medical_beauty', this)">🔴 醫美</button>
-      <button class="filter-btn" onclick="setFilter('other_medical', this)">🟡 其他醫療</button>
-      <button class="refresh-btn" onclick="loadArticles()">↻ 重新整理</button>
+    <!-- Tab 2: 關鍵字雷達 -->
+    <div class="tab-panel" id="tab-search">
+      <div class="search-box-wrap">
+        <h2>🔍 關鍵字搜尋</h2>
+        <div class="search-row">
+          <input class="search-input" type="text" id="search-q" placeholder="輸入診所名、醫師名、事件關鍵字…" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="search-btn" id="search-btn" onclick="doSearch()">搜尋</button>
+        </div>
+        <div class="source-checks">
+          <label><input type="checkbox" value="dcard" checked> Dcard</label>
+          <label><input type="checkbox" value="ptt" checked> PTT</label>
+          <label><input type="checkbox" value="google_news" checked> Google 新聞</label>
+          <label><input type="checkbox" value="mobile01" checked> Mobile01</label>
+          <label><input type="checkbox" value="threads" checked> Threads</label>
+        </div>
+      </div>
+
+      <div id="search-results-area">
+        <div class="search-hint">輸入關鍵字後按搜尋，即時查詢各平台討論</div>
+      </div>
     </div>
 
-    <div class="articles-grid" id="articles-container">
-      <div class="loading">載入中...</div>
-    </div>
   </div>
 </div>
 
@@ -221,11 +296,35 @@ const BACKEND_URL = 'https://sentiment-monitor-yik9.onrender.com';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentFilter = 'all';
+let currentFilter = { type: 'cat', value: 'all' };
 let currentUser = null;
 let settings = { notify_medical_beauty: true, notify_other_medical: true, line_user_id: '' };
 let isRegisterMode = false;
 
+const SOURCE_LABEL = { dcard: 'Dcard', ptt: 'PTT', google_news: 'Google', threads: 'Threads', mobile01: 'Mobile01' };
+
+function aiLabelBadge(label) {
+  if (!label) return '';
+  const map = {
+    '醫療糾紛': 'badge-ai-dispute',
+    '負評投訴': 'badge-ai-complaint',
+    '一般討論': 'badge-ai-discuss',
+    '正面評價': 'badge-ai-positive',
+    '新聞報導': 'badge-ai-news',
+  };
+  const cls = map[label] || 'badge-ai-discuss';
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ── Tabs ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Auth ──
 function togglePw(id, el) {
   const inp = document.getElementById(id);
   const show = inp.type === 'password';
@@ -243,16 +342,9 @@ function toggleAuthMode(e) {
   document.getElementById('auth-toggle-text').textContent = isRegisterMode ? '已有帳號？' : '還沒有帳號？';
   document.getElementById('auth-toggle-link').textContent = isRegisterMode ? '返回登入' : '申請帳號';
   document.getElementById('login-error').style.display = 'none';
-  document.getElementById('login-success').style.display = 'none';
 }
 
-async function handleAuth() {
-  if (isRegisterMode) {
-    await register();
-  } else {
-    await login();
-  }
-}
+async function handleAuth() { isRegisterMode ? await register() : await login(); }
 
 async function login() {
   const email = document.getElementById('email').value.trim();
@@ -260,12 +352,8 @@ async function login() {
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) {
-    errEl.textContent = '帳號或密碼錯誤';
-    errEl.style.display = 'block';
-  } else {
-    showMain();
-  }
+  if (error) { errEl.textContent = '帳號或密碼錯誤'; errEl.style.display = 'block'; }
+  else showMain();
 }
 
 async function register() {
@@ -275,38 +363,27 @@ async function register() {
   const name = document.getElementById('reg-name').value.trim();
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
-
   if (!name) { errEl.textContent = '請填寫姓名'; errEl.style.display = 'block'; return; }
   if (!email || !password) { errEl.textContent = '請填寫 Email 和密碼'; errEl.style.display = 'block'; return; }
   if (password.length < 6) { errEl.textContent = '密碼至少需要 6 位'; errEl.style.display = 'block'; return; }
   if (password !== confirm) { errEl.textContent = '兩次密碼不一致'; errEl.style.display = 'block'; return; }
-
   const btn = document.getElementById('auth-btn');
-  btn.disabled = true;
-  btn.textContent = '送出中...';
-
-  // 帳號建立完全在後端處理，前端不碰 Supabase session
+  btn.disabled = true; btn.textContent = '送出中...';
   const resp = await fetch(`${BACKEND_URL}/api/register`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ email, password, name })
   });
-
   if (!resp.ok) {
     const d = await resp.json().catch(() => ({}));
-    errEl.textContent = d.detail || '申請失敗，請稍後再試';
-    errEl.style.display = 'block';
-    btn.disabled = false; btn.textContent = '送出申請';
-    return;
+    errEl.textContent = d.detail || '申請失敗，請稍後再試'; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '送出申請'; return;
   }
-
   document.getElementById('login-page').innerHTML = `
     <div class="login-card" style="text-align:center">
       <div style="font-size:48px;margin-bottom:16px">📬</div>
       <h1 style="font-size:20px;margin-bottom:12px">申請已送出</h1>
-      <p style="color:#666;line-height:1.6">管理員收到通知後會審核你的帳號。<br>審核通過後即可使用 <strong>${email}</strong> 登入。</p>
-    </div>
-  `;
+      <p style="color:#666;line-height:1.6">管理員審核後即可使用 <strong>${email}</strong> 登入。</p>
+    </div>`;
 }
 
 async function logout() {
@@ -318,8 +395,6 @@ async function logout() {
 async function showMain() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
-
-  // 審核狀態檢查
   const checkResp = await fetch(`${BACKEND_URL}/api/check-approval?user_id=${user.id}`);
   const checkData = await checkResp.json();
   if (!checkData.approved) {
@@ -329,12 +404,10 @@ async function showMain() {
       <div class="login-card" style="text-align:center">
         <div style="font-size:48px;margin-bottom:16px">⏳</div>
         <h1 style="font-size:20px;margin-bottom:12px">帳號審核中</h1>
-        <p style="color:#666;line-height:1.6">${user.email}<br>尚未通過管理員審核，請稍候。</p>
-        <p style="margin-top:20px"><a href="${window.location.href}" style="color:#173B2F;font-size:13px">重新整理</a></p>
-      </div>`;
-    return;
+        <p style="color:#666">${user.email}<br>尚未通過管理員審核，請稍候。</p>
+        <p style="margin-top:20px"><a href="${window.location.href}" style="color:var(--brand);font-size:13px">重新整理</a></p>
+      </div>`; return;
   }
-
   currentUser = user;
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('main-page').style.display = 'block';
@@ -343,69 +416,140 @@ async function showMain() {
   await loadArticles();
 }
 
+// ── 輿情監控 ──
 async function loadArticles() {
   document.getElementById('articles-container').innerHTML = '<div class="loading">載入中...</div>';
 
-  let query = sb.from('articles').select('*').order('published_at', { ascending: false }).limit(100);
-  if (currentFilter !== 'all') query = query.eq('category', currentFilter);
+  let query = sb.from('articles').select('*').order('published_at', { ascending: false }).limit(150);
+  if (currentFilter.type === 'cat' && currentFilter.value !== 'all') query = query.eq('category', currentFilter.value);
+  if (currentFilter.type === 'ai') query = query.eq('ai_label', currentFilter.value);
 
   const { data, error } = await query;
   if (error || !data) {
-    document.getElementById('articles-container').innerHTML = '<div class="empty">載入失敗，請重試</div>';
-    return;
+    document.getElementById('articles-container').innerHTML = '<div class="empty">載入失敗，請重試</div>'; return;
   }
 
   updateStats(data);
+  renderAlertZone(data);
   renderArticles(data);
 }
 
 function updateStats(articles) {
   const today = new Date().toISOString().split('T')[0];
-  const todayArticles = articles.filter(a => a.created_at?.startsWith(today));
+  const todayArticles = articles.filter(a => a.published_at?.startsWith(today));
+  const disputes = articles.filter(a => a.ai_label === '醫療糾紛');
   document.getElementById('stat-total').textContent = todayArticles.length;
+  document.getElementById('stat-dispute').textContent = disputes.length;
   document.getElementById('stat-beauty').textContent = articles.filter(a => a.category === 'medical_beauty').length;
   document.getElementById('stat-medical').textContent = articles.filter(a => a.category === 'other_medical').length;
-  document.getElementById('stat-unread').textContent = articles.length;
+}
+
+function renderAlertZone(articles) {
+  const today = new Date().toISOString().split('T')[0];
+  const disputes = articles.filter(a => a.ai_label === '醫療糾紛' && a.published_at?.startsWith(today));
+  const zone = document.getElementById('alert-zone');
+  if (!disputes.length) { zone.style.display = 'none'; return; }
+  zone.style.display = 'block';
+  document.getElementById('alert-items').innerHTML = disputes.map(a => `
+    <div class="alert-item" onclick="window.open('${a.url}','_blank')">
+      <div class="alert-item-title">${a.title}</div>
+      <div class="alert-item-meta">${SOURCE_LABEL[a.source] || a.source} · ${fmtTime(a.published_at)}</div>
+    </div>`).join('');
 }
 
 function renderArticles(articles) {
   if (!articles.length) {
-    document.getElementById('articles-container').innerHTML = '<div class="empty">目前沒有輿情資料</div>';
-    return;
+    document.getElementById('articles-container').innerHTML = '<div class="empty">目前沒有符合的資料</div>'; return;
   }
-
-  const sourceMap = { dcard: 'Dcard', ptt: 'PTT', google_news: 'Google', threads: 'Threads' };
-  const html = articles.map(a => {
+  document.getElementById('articles-container').innerHTML = articles.map(a => {
     const isBeauty = a.category === 'medical_beauty';
     const badgeClass = isBeauty ? 'badge-beauty' : 'badge-medical';
-    const label = isBeauty ? '🔴 醫美' : '🟡 其他醫療';
+    const catLabel = isBeauty ? '🔴 醫美' : '🟡 其他醫療';
     const keywords = (a.negative_keywords || []).slice(0, 3).map(k => `<span class="keyword-chip">${k}</span>`).join('');
-    const time = a.published_at ? new Date(a.published_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
-
     return `<div class="article-card ${a.category}" onclick="window.open('${a.url}','_blank')">
       <div class="article-meta">
-        <span class="badge ${badgeClass}">${label}</span>
-        <span class="badge badge-source">${sourceMap[a.source] || a.source}</span>
+        <span class="badge ${badgeClass}">${catLabel}</span>
+        <span class="badge badge-source">${SOURCE_LABEL[a.source] || a.source}</span>
+        ${aiLabelBadge(a.ai_label)}
       </div>
       <div class="article-title">${a.title}</div>
-      <div class="article-snippet">${a.content_snippet || ''}</div>
+      ${a.content_snippet ? `<div class="article-snippet">${a.content_snippet}</div>` : ''}
       <div class="article-footer">
         <div class="keyword-chips">${keywords}</div>
-        <span class="article-time">${time}</span>
+        <span class="article-time">${fmtTime(a.published_at)}</span>
       </div>
     </div>`;
   }).join('');
-
-  document.getElementById('articles-container').innerHTML = html;
 }
 
-function setFilter(filter, btn) {
-  currentFilter = filter;
+function setFilter(value, type, btn) {
+  currentFilter = { type, value };
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   loadArticles();
 }
 
+function fmtTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+// ── 關鍵字搜尋 ──
+async function doSearch() {
+  const q = document.getElementById('search-q').value.trim();
+  if (!q) return;
+
+  const checked = Array.from(document.querySelectorAll('.source-checks input:checked')).map(el => el.value);
+  if (!checked.length) { alert('請至少選一個平台'); return; }
+
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true; btn.textContent = '搜尋中…';
+  document.getElementById('search-results-area').innerHTML = '<div class="loading">正在查詢各平台，請稍候…</div>';
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/api/search?q=${encodeURIComponent(q)}&sources=${checked.join(',')}`);
+    if (!resp.ok) throw new Error('搜尋失敗');
+    const data = await resp.json();
+    renderSearchResults(data);
+  } catch (e) {
+    document.getElementById('search-results-area').innerHTML = `<div class="empty">搜尋失敗：${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '搜尋';
+  }
+}
+
+function renderSearchResults(data) {
+  const { query, total, counts, articles } = data;
+  const statsHtml = Object.entries(counts).map(([src, cnt]) =>
+    `<div class="search-stat"><div class="s-num">${cnt}</div><div class="s-lbl">${SOURCE_LABEL[src] || src}</div></div>`
+  ).join('');
+
+  const articlesHtml = articles.length ? articles.map(a => {
+    const isBeauty = a.category === 'medical_beauty';
+    const badgeClass = isBeauty ? 'badge-beauty' : 'badge-medical';
+    const catLabel = isBeauty ? '🔴 醫美' : (a.category === 'other_medical' ? '🟡 其他醫療' : '⚪ 一般');
+    return `<div class="article-card ${a.category || ''}" onclick="window.open('${a.url}','_blank')">
+      <div class="article-meta">
+        <span class="badge badge-source">${SOURCE_LABEL[a.source] || a.source}</span>
+        ${aiLabelBadge(a.ai_label)}
+      </div>
+      <div class="article-title">${a.title}</div>
+      ${a.content_snippet ? `<div class="article-snippet">${a.content_snippet}</div>` : ''}
+      <div class="article-footer">
+        <span class="article-time">${fmtTime(a.published_at)}</span>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">沒有找到相關討論</div>';
+
+  document.getElementById('search-results-area').innerHTML = `
+    <div style="margin-bottom:14px">
+      <strong style="color:var(--brand);font-size:15px">「${query}」搜尋結果：共 ${total} 篇</strong>
+    </div>
+    <div class="search-stats">${statsHtml}</div>
+    <div class="articles-grid">${articlesHtml}</div>`;
+}
+
+// ── Settings ──
 async function loadSettings() {
   if (!currentUser) return;
   const { data } = await sb.from('user_settings').select('*').eq('user_id', currentUser.id).single();
@@ -416,19 +560,9 @@ async function saveSettings() {
   const lineUserId = document.getElementById('line-user-id').value.trim();
   const notifyBeauty = document.getElementById('toggle-beauty').classList.contains('on');
   const notifyMedical = document.getElementById('toggle-medical').classList.contains('on');
-
-  const payload = {
-    user_id: currentUser.id,
-    line_user_id: lineUserId || null,
-    notify_medical_beauty: notifyBeauty,
-    notify_other_medical: notifyMedical,
-    updated_at: new Date().toISOString()
-  };
-
+  const payload = { user_id: currentUser.id, line_user_id: lineUserId || null, notify_medical_beauty: notifyBeauty, notify_other_medical: notifyMedical, updated_at: new Date().toISOString() };
   await sb.from('user_settings').upsert(payload, { onConflict: 'user_id' });
-  settings = payload;
-  closeSettings();
-  alert('設定已儲存！');
+  settings = payload; closeSettings(); alert('設定已儲存！');
 }
 
 function openSettings() {
@@ -438,22 +572,11 @@ function openSettings() {
   document.getElementById('settings-modal').classList.add('open');
 }
 
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('open');
-}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+function toggleSetting(type) { document.getElementById(`toggle-${type}`).classList.toggle('on'); }
 
-function toggleSetting(type) {
-  const el = document.getElementById(`toggle-${type}`);
-  el.classList.toggle('on');
-}
-
-// 自動重新整理（每 5 分鐘）
 setInterval(loadArticles, 5 * 60 * 1000);
-
-// 啟動
-sb.auth.onAuthStateChange((event, session) => {
-  if (session) showMain();
-});
+sb.auth.onAuthStateChange((event, session) => { if (session) showMain(); });
 </script>
 </body>
 </html>
